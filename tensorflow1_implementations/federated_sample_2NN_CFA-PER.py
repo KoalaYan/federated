@@ -172,6 +172,8 @@ def processData(samples, iii, federated, tot_devices,fraction_training, neighbor
         sio.savemat(
             'results/dump_loss_{}_{date:%Y-%m-%d-%H-%M-%S}.mat'.format(iii, date=datetime.datetime.now().time()), {
                 "val_acc": val_loss, "device": iii})
+
+
         # Test model
         # correct_prediction = tf.equal(tf.argmax(pred, 1), tf.argmax(y, 1))
         # Calculate accuracy for 3000 examples
