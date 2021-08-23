@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 from keras.utils import to_categorical
 from consensus.cfa import CFA_process
 import numpy as np
-import tensorflow as tf
+# import tensorflow as tf
 import datetime
 import scipy.io as sio
 import multiprocessing
@@ -10,8 +10,14 @@ import math
 from matplotlib.pyplot import pause
 import os
 import glob
+import logging
 
 import argparse
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
+os.environ["CUDA_VISIBLE_DEVICES"]="-1"
+os.environ['TF_CPP_MIN_LOG_LEVEL']= '3'
+logging.basicConfig(filename='2NN_CFA.log', level=logging.INFO)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-mu', default=0.025, help="sets the learning rate for local SGD", type=float)
@@ -151,8 +157,10 @@ def processData(samples, iii, federated, tot_devices,fraction_training, neighbor
                                         y: batch_ys, W2_ext_l1: n_W_l1, b2_ext_l1: n_b_l1, W2_ext_l2: n_W_l2, b2_ext_l2: n_b_l2})
                     avg_cost_test += c / total_batch2
             val_loss[epoch] = avg_cost_test
-            print('Test Device: ' + str(iii) + " Epoch:", '%04d' % (epoch + 1), "cost=", "{:.9f}".format(avg_cost_test))
-
+            # print('Test Device: ' + str(iii) + " Epoch:", '%04d' % (epoch + 1), "cost=", "{:.9f}".format(avg_cost_test))
+            logInfo = 'Test Device: ' + str(iii) + ", Epoch:" + '%04d' % (epoch + 1) + ", cost=" + "{:.9f}".format(avg_cost_test)
+            print("Log Info: " + logInfo)
+            logging.info(logInfo)
             ###########################################################
             # CFA: weights exchange (no gradients)
             W_val_l1, b_val_l1, W_val_l2, b_val_l2 = consensus_p.getFederatedWeight(n_W_l1, n_W_l2, n_b_l1, n_b_l2, epoch, val_loss, args.eps)
@@ -172,6 +180,7 @@ def processData(samples, iii, federated, tot_devices,fraction_training, neighbor
 if __name__ == "__main__":
 
     # DELETE TEMPORARY CACHE FILES
+    print("start")
     fileList = glob.glob('*.mat', recursive=False)
     print(fileList)
     for filePath in fileList:

@@ -8,6 +8,7 @@ import math
 from matplotlib.pyplot import pause
 import os
 import glob
+import random
 
 class CFA_process:
     # sets neighbor indexes for k-regular networks (number of neighbors is 'neighbors'
@@ -30,8 +31,8 @@ class CFA_process:
                 sets_neighbors = np.arange(devices - neighbors - 1, devices)
             index_ii = np.where(sets_neighbors == ii_saved_local)
             sets_neighbors_final = np.delete(sets_neighbors, index_ii)
-        print("connectivity:", ii_saved_local)
-        print(sets_neighbors_final)
+        # print("connectivity:", ii_saved_local)
+        # print(sets_neighbors_final)
         return sets_neighbors_final
 
     # compute weights for CFA
@@ -68,15 +69,15 @@ class CFA_process:
 
         balancing_vect = np.ones(devices) * b_v
         weight_factor = (balancing_vect[ii2] / (
-                    balancing_vect[ii2] + (neighbors - 1) * balancing_vect[ii]))  # equation (11) from paper
+                balancing_vect[ii2] + (neighbors - 1) * balancing_vect[ii]))  # equation (11) from paper
         updated_weights_l1 = weights_current_l1 + eps_t_control * weight_factor * (
-                    mathcontent['weights1'] - weights_current_l1)  # see paper section 3
+                mathcontent['weights1'] - weights_current_l1)  # see paper section 3
         updated_biases_l1 = biases_current_l1 + eps_t_control * weight_factor * (
-                    mathcontent['biases1'] - biases_current_l1)
+                mathcontent['biases1'] - biases_current_l1)
         updated_weights_l2 = weights_current_l2 + eps_t_control * weight_factor * (
-                    mathcontent['weights2'] - weights_current_l2)  # see paper section 3
+                mathcontent['weights2'] - weights_current_l2)  # see paper section 3
         updated_biases_l2 = biases_current_l2 + eps_t_control * weight_factor * (
-                    mathcontent['biases2'] - biases_current_l2)
+                mathcontent['biases2'] - biases_current_l2)
 
         weights_l1 = updated_weights_l1
         biases_l1 = updated_biases_l1
@@ -95,15 +96,27 @@ class CFA_process:
                 "weights1": weights_l1, "biases1": biases_l1, "weights2": weights_l2, "biases2": biases_l2})
         return weights_l1, biases_l1, weights_l2, biases_l2
 
-    def __init__(self, federated, devices, ii_saved_local, neighbors):
+    def __init__(self, federated, devices, ii_saved_local, neighbors, probability):
         self.federated = federated # true for federation active
         self.devices = devices # number of devices
         self.ii_saved_local = ii_saved_local # device index
         self.neighbors = neighbors # neighbors number (given the network topology)
         self.neighbor_vec = self.get_connectivity(ii_saved_local, neighbors, devices) # neighbor list
+        self.p = probability # package error rate
 
     def disable_consensus(self, federated):
         self.federated = federated
+
+    def neighborWithPackageError(self):
+        neighbor_vec_new = []
+        for i in self.neighbor_vec:
+            x = random.uniform(0,1)
+            if x >= self.p:
+                neighbor_vec_new.append(i)
+        neighbor_vec_new = np.array(neighbor_vec_new)
+        return neighbor_vec_new
+
+
 
     def getFederatedWeight(self, n_W_l1, n_W_l2, n_b_l1, n_b_l2, epoch, v_loss, eps_t_control):
         if (self.federated):
@@ -119,17 +132,25 @@ class CFA_process:
                     sio.savemat('temp_datamat{}_{}.mat'.format(self.ii_saved_local, epoch), {
                         "weights1": n_W_l1, "biases1": n_b_l1, "weights2": n_W_l2, "biases2": n_b_l2, "epoch": epoch, "loss_sample": v_loss})
                     # neighbor_vec = get_connectivity(self.ii_saved_local, self.neighbors, self.devices)
-                    for neighbor_index in range(self.neighbor_vec.size):
+                    neighbor_vec_new = self.neighborWithPackageError()
+                    neighbor_new = neighbor_vec_new.size
+                    if neighbor_new == 0:
+                        W_up_l1 = n_W_l1
+                        n_up_l1 = n_b_l1
+                        W_up_l2 = n_W_l2
+                        n_up_l2 = n_b_l2
+
+                    for neighbor_index in range(neighbor_new):
                         while not os.path.isfile(
-                                'datamat{}_{}.mat'.format(self.neighbor_vec[neighbor_index], epoch - 1)) or not os.path.isfile(
-                                'temp_datamat{}_{}.mat'.format(self.ii_saved_local, epoch)):
+                                'datamat{}_{}.mat'.format(neighbor_vec_new[neighbor_index], epoch - 1)) or not os.path.isfile(
+                            'temp_datamat{}_{}.mat'.format(self.ii_saved_local, epoch)):
                             # print('Waiting for datamat{}_{}.mat'.format(self.ii_saved_local - 1, epoch - 1))
                             pause(1)
                         [W_up_l1, n_up_l1, W_up_l2, n_up_l2] = self.federated_weights_computing2(
-                            'datamat{}_{}.mat'.format(self.neighbor_vec[neighbor_index], epoch - 1),
+                            'datamat{}_{}.mat'.format(neighbor_vec_new[neighbor_index], epoch - 1),
                             'temp_datamat{}_{}.mat'.format(self.ii_saved_local, epoch), self.ii_saved_local,
-                            self.neighbor_vec[neighbor_index],
-                            epoch, self.devices, self.neighbors, eps_t_control)
+                            neighbor_vec_new[neighbor_index],
+                            epoch, self.devices, neighbor_new, eps_t_control)
                         pause(5)
                     try:
                         sio.savemat('datamat{}_{}.mat'.format(self.ii_saved_local, epoch), {
@@ -155,3 +176,4 @@ class CFA_process:
             W_up_l2 = n_W_l2
             n_up_l2 = n_b_l2
         return W_up_l1, n_up_l1, W_up_l2, n_up_l2
+

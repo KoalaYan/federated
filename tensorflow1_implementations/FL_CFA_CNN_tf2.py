@@ -17,6 +17,9 @@ import warnings
 import time
 import datetime
 import random
+tf.disable_v2_behavior()
+os.environ["CUDA_VISIBLE_DEVICES"]="-1"
+os.environ['TF_CPP_MIN_LOG_LEVEL']= '3'
 
 warnings.filterwarnings("ignore")
 parser = argparse.ArgumentParser()
@@ -89,10 +92,13 @@ def processData(samples, iii, federated, tot_devices,fraction_training, neighbor
     np.random.seed(1)
     tf.set_random_seed(1)  # common initialization tf 1.13
     # tf.random.set_seed(1)
+    dbtest = sio.loadmat('dati_mimoradar/data_validation_mmwave_900.mat')
+    dbtrain = sio.loadmat('dati_mimoradar/data_training_mmwave_900.mat')
+    print(dbtest.keys())
+    print(dbtrain.keys())
+    # database = sio.loadmat(args.input_data)
+    database = dbtrain
 
-    # database = sio.loadmat('dati_mimoradar/data_mmwave_900.mat')
-    database = sio.loadmat(args.input_data)
-    # database = sio.loadmat('dati_mimoradar/data_mmwave_450.mat')
     x_train = database['mmwave_data_train']
     y_train = database['label_train']
     y_train_t = to_categorical(y_train)
@@ -100,6 +106,7 @@ def processData(samples, iii, federated, tot_devices,fraction_training, neighbor
     x_train2 = x_train[iii * samples:((iii + 1) * samples - 1), :, :] # DATA PARTITION
     y_train2 = y_train_t[iii * samples:((iii + 1) * samples - 1), :]
 
+    database = dbtest
     x_test = database['mmwave_data_test']
     y_test = database['label_test']
     x_test = (x_test.astype('float32').clip(0)) / 1000

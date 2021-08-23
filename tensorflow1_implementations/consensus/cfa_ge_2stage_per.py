@@ -9,6 +9,7 @@ from matplotlib.pyplot import pause
 import os
 import glob
 import tensorflow.compat.v1 as tf
+import random
 tf.disable_v2_behavior()
 
 class CFA_ge_process:
@@ -74,15 +75,15 @@ class CFA_ge_process:
 
         balancing_vect = np.ones(devices) * b_v
         weight_factor = (balancing_vect[ii2] / (
-                    balancing_vect[ii2] + (neighbors - 1) * balancing_vect[ii]))  # equation (11) from paper
+                balancing_vect[ii2] + (neighbors - 1) * balancing_vect[ii]))  # equation (11) from paper
         updated_weights_l1 = weights_current_l1 + eps_t_control * weight_factor * (
-                    mathcontent['weights1'] - weights_current_l1)  # see paper section 3
+                mathcontent['weights1'] - weights_current_l1)  # see paper section 3
         updated_biases_l1 = biases_current_l1 + eps_t_control * weight_factor * (
-                    mathcontent['biases1'] - biases_current_l1)
+                mathcontent['biases1'] - biases_current_l1)
         updated_weights_l2 = weights_current_l2 + eps_t_control * weight_factor * (
-                    mathcontent['weights2'] - weights_current_l2)  # see paper section 3
+                mathcontent['weights2'] - weights_current_l2)  # see paper section 3
         updated_biases_l2 = biases_current_l2 + eps_t_control * weight_factor * (
-                    mathcontent['biases2'] - biases_current_l2)
+                mathcontent['biases2'] - biases_current_l2)
 
         weights_l1 = updated_weights_l1
         biases_l1 = updated_biases_l1
@@ -108,6 +109,15 @@ class CFA_ge_process:
         self.neighbors = neighbors # neighbors number (given the network topology)
         self.mewma = mewma # MEWMA parameter for gradients exchange (see paper)
         self.neighbor_vec = self.get_connectivity(ii_saved_local, neighbors, devices) # neighbor list
+
+    def neighborWithPackageError(self):
+        neighbor_vec_new = []
+        for i in self.neighbor_vec:
+            x = random.uniform(0,1)
+            if x >= self.p:
+                neighbor_vec_new.append(i)
+        neighbor_vec_new = np.array(neighbor_vec_new)
+        return neighbor_vec_new
 
     def setCNNparameters(self, filter, number, pooling, stride, multip, classes, input_data):
         # CNN network (model 1)
@@ -338,13 +348,13 @@ class CFA_ge_process:
                                 n_l2_saved[:, neighbor_index] = gradn_up_neigh_l2[:, self.ii_saved_local]
                             else:
                                 W_l1_saved[:, :, :, neighbor_index] = self.mewma * gradW_up_neigh_l1[:, :, :, self.ii_saved_local] + (
-                                            1 - self.mewma) * W_l1_saved[:, :, :, neighbor_index]
+                                        1 - self.mewma) * W_l1_saved[:, :, :, neighbor_index]
                                 W_l2_saved[:, :, neighbor_index] = self.mewma * gradW_up_neigh_l2[:, :, self.ii_saved_local] + (
-                                            1 - self.mewma) * W_l2_saved[:, :, neighbor_index]
+                                        1 - self.mewma) * W_l2_saved[:, :, neighbor_index]
                                 n_l1_saved[:, neighbor_index] = self.mewma * gradn_up_neigh_l1[:, self.ii_saved_local] + (
-                                            1 - self.mewma) * n_l1_saved[:, neighbor_index]
+                                        1 - self.mewma) * n_l1_saved[:, neighbor_index]
                                 n_l2_saved[:, neighbor_index] = self.mewma * gradn_up_neigh_l2[:, self.ii_saved_local] + (
-                                            1 - self.mewma) * n_l2_saved[:, neighbor_index]
+                                        1 - self.mewma) * n_l2_saved[:, neighbor_index]
 
                             W_up_l1 = W_up_l1 - learning_rate1 * gradW_up_neigh_l1[:, :, :, self.ii_saved_local]
                             n_up_l1 = n_up_l1 - learning_rate1 * gradn_up_neigh_l1[:, self.ii_saved_local]
@@ -359,13 +369,13 @@ class CFA_ge_process:
                                 n_l2_saved[:, neighbor_index] = gradn_up_neigh_l2[:, self.ii_saved_local]
                             else:
                                 W_l1_saved[:, :, neighbor_index] = self.mewma * gradW_up_neigh_l1[:, :, self.ii_saved_local] + (
-                                            1 - self.mewma) * W_l1_saved[:, :, neighbor_index]
+                                        1 - self.mewma) * W_l1_saved[:, :, neighbor_index]
                                 W_l2_saved[:, :, neighbor_index] = self.mewma * gradW_up_neigh_l2[:, :, self.ii_saved_local] + (
-                                            1 - self.mewma) * W_l2_saved[:, :, neighbor_index]
+                                        1 - self.mewma) * W_l2_saved[:, :, neighbor_index]
                                 n_l1_saved[:, neighbor_index] = self.mewma * gradn_up_neigh_l1[:, self.ii_saved_local] + (
-                                            1 - self.mewma) * n_l1_saved[:, neighbor_index]
+                                        1 - self.mewma) * n_l1_saved[:, neighbor_index]
                                 n_l2_saved[:, neighbor_index] = self.mewma * gradn_up_neigh_l2[:, self.ii_saved_local] + (
-                                            1 - self.mewma) * n_l2_saved[:, neighbor_index]
+                                        1 - self.mewma) * n_l2_saved[:, neighbor_index]
 
                             W_up_l1 = W_up_l1 - learning_rate1 * gradW_up_neigh_l1[:, :, self.ii_saved_local]
                             n_up_l1 = n_up_l1 - learning_rate1 * gradn_up_neigh_l1[:, self.ii_saved_local]
@@ -388,7 +398,7 @@ class CFA_ge_process:
 
     # CFA -  GE: 2 stage (or fast) negotiation
     def getFederatedWeight_gradients_fast(self, n_W_l1, n_W_l2, n_b_l1, n_b_l2, epoch, v_loss,
-                                     eng, x_train2, y_train2, W_l1_saved, W_l2_saved, n_l1_saved, n_l2_saved, eps_t_control, learning_rate1, learning_rate2):
+                                          eng, x_train2, y_train2, W_l1_saved, W_l2_saved, n_l1_saved, n_l2_saved, eps_t_control, learning_rate1, learning_rate2):
         # choosing the ML model (only 2 models are defined in this version)
         if self.ML_model == 1:  # CNN 2 layers, see paper
             x_c = tf.placeholder(tf.float32, [None, self.input_data])  # 512 point FFT range measurements
@@ -452,7 +462,7 @@ class CFA_ge_process:
                     for neighbor_index in range(neighbor_vec.size):
                         while not os.path.isfile(
                                 'datamat{}_{}.mat'.format(neighbor_vec[neighbor_index], epoch - 1)) or not os.path.isfile(
-                                'temp_datamat{}_{}.mat'.format(self.ii_saved_local, epoch)):
+                            'temp_datamat{}_{}.mat'.format(self.ii_saved_local, epoch)):
                             # print('Waiting for datamat{}_{}.mat'.format(ii_saved_local - 1, epoch - 1))
                             pause(1)
                         [W_up_l1, n_up_l1, W_up_l2, n_up_l2] = self.federated_weights_computing2(
@@ -594,13 +604,13 @@ class CFA_ge_process:
                         # saving gradients
                         if self.ML_model == 1:
                             W_l1_saved[:, :, :, neighbor_index] = self.mewma * gradW_up_neigh_l1[:, :, :, self.ii_saved_local] + (
-                                        1 - self.mewma) * W_l1_saved[:, :, :, neighbor_index]
+                                    1 - self.mewma) * W_l1_saved[:, :, :, neighbor_index]
                             W_l2_saved[:, :, neighbor_index] = self.mewma * gradW_up_neigh_l2[:, :, self.ii_saved_local] + (
-                                        1 - self.mewma) * W_l2_saved[:, :, neighbor_index]
+                                    1 - self.mewma) * W_l2_saved[:, :, neighbor_index]
                             n_l1_saved[:, neighbor_index] = self.mewma * gradn_up_neigh_l1[:, self.ii_saved_local] + (
-                                        1 - self.mewma) * n_l1_saved[:, neighbor_index]
+                                    1 - self.mewma) * n_l1_saved[:, neighbor_index]
                             n_l2_saved[:, neighbor_index] = self.mewma * gradn_up_neigh_l2[:, self.ii_saved_local] + (
-                                        1 - self.mewma) * n_l2_saved[:, neighbor_index]
+                                    1 - self.mewma) * n_l2_saved[:, neighbor_index]
 
                             W_up_l1 = W_up_l1 - learning_rate1 * W_l1_saved[:, :, :, neighbor_index]
                             n_up_l1 = n_up_l1 - learning_rate1 * n_l1_saved[:, neighbor_index]
@@ -609,13 +619,13 @@ class CFA_ge_process:
 
                         elif self.ML_model == 2:
                             W_l1_saved[:, :, neighbor_index] = self.mewma * gradW_up_neigh_l1[:, :, self.ii_saved_local] + (
-                                                                    1 - self.mewma) * W_l1_saved[:, :, neighbor_index]
+                                    1 - self.mewma) * W_l1_saved[:, :, neighbor_index]
                             W_l2_saved[:, :, neighbor_index] = self.mewma * gradW_up_neigh_l2[:, :, self.ii_saved_local] + (
-                                                                    1 - self.mewma) * W_l2_saved[:, :, neighbor_index]
+                                    1 - self.mewma) * W_l2_saved[:, :, neighbor_index]
                             n_l1_saved[:, neighbor_index] = self.mewma * gradn_up_neigh_l1[:, self.ii_saved_local] + (
-                                                                    1 - self.mewma) * n_l1_saved[:, neighbor_index]
+                                    1 - self.mewma) * n_l1_saved[:, neighbor_index]
                             n_l2_saved[:, neighbor_index] = self.mewma * gradn_up_neigh_l2[:, self.ii_saved_local] + (
-                                                                    1 - self.mewma) * n_l2_saved[:, neighbor_index]
+                                    1 - self.mewma) * n_l2_saved[:, neighbor_index]
 
                             W_up_l1 = W_up_l1 - learning_rate1 * gradW_up_neigh_l1[:, :, self.ii_saved_local]
                             n_up_l1 = n_up_l1 - learning_rate1 * gradn_up_neigh_l1[:, self.ii_saved_local]
