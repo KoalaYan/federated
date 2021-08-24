@@ -15,7 +15,7 @@ import logging
 import argparse
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
-os.environ["CUDA_VISIBLE_DEVICES"]="-1"
+# os.environ["CUDA_VISIBLE_DEVICES"]="-1"
 os.environ['TF_CPP_MIN_LOG_LEVEL']= '3'
 logging.basicConfig(filename='2NN_CFA.log', level=logging.INFO)
 
