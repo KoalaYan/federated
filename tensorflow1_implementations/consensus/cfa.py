@@ -41,13 +41,13 @@ class CFA_process:
         # eps_t_control = 1 #from paper
         while not os.path.isfile(filename2):
             print('Waiting..')
-            pause(1)
+            pause(0.2)
 
         try:
             mathcontent = sio.loadmat(filename2)
         except:
             print('Detected problem while loading file')
-            pause(3)
+            pause(0.2)
             mathcontent = sio.loadmat(filename2)
 
         weights_current_l1 = mathcontent['weights1']
@@ -57,13 +57,13 @@ class CFA_process:
 
         while not os.path.isfile(filename):
             print('Waiting..')
-            pause(1)
+            pause(0.2)
 
         try:
             mathcontent = sio.loadmat(filename)
         except:
             print('Detected problem while loading file')
-            pause(3)
+            pause(0.2)
             mathcontent = sio.loadmat(filename)
 
         balancing_vect = np.ones(devices) * b_v
@@ -89,7 +89,7 @@ class CFA_process:
             mathcontent = sio.loadmat('temp_datamat{}_{}.mat'.format(ii, saved_epoch))
         except:
             print('Unable to save file .. retrying')
-            pause(3)
+            pause(0.2)
             print(biases)
             sio.savemat('temp_datamat{}_{}.mat'.format(ii, saved_epoch), {
                 "weights1": weights_l1, "biases1": biases_l1, "weights2": weights_l2, "biases2": biases_l2})
@@ -124,20 +124,20 @@ class CFA_process:
                                 'datamat{}_{}.mat'.format(self.neighbor_vec[neighbor_index], epoch - 1)) or not os.path.isfile(
                                 'temp_datamat{}_{}.mat'.format(self.ii_saved_local, epoch)):
                             # print('Waiting for datamat{}_{}.mat'.format(self.ii_saved_local - 1, epoch - 1))
-                            pause(1)
+                            pause(0.2)
                         [W_up_l1, n_up_l1, W_up_l2, n_up_l2] = self.federated_weights_computing2(
                             'datamat{}_{}.mat'.format(self.neighbor_vec[neighbor_index], epoch - 1),
                             'temp_datamat{}_{}.mat'.format(self.ii_saved_local, epoch), self.ii_saved_local,
                             self.neighbor_vec[neighbor_index],
                             epoch, self.devices, self.neighbors, eps_t_control)
-                        pause(5)
+                        pause(0.2)
                     try:
                         sio.savemat('datamat{}_{}.mat'.format(self.ii_saved_local, epoch), {
                             "weights1": n_W_l1, "biases1": n_b_l1, "weights2": n_W_l2, "biases2": n_b_l2})
                         mathcontent = sio.loadmat('datamat{}_{}.mat'.format(self.ii_saved_local, epoch))
                     except:
                         print('Unable to save file .. retrying')
-                        pause(3)
+                        pause(0.2)
                         sio.savemat('datamat{}_{}.mat'.format(self.ii_saved_local, epoch), {
                             "weights1": n_W_l1, "biases1": n_b_l1, "weights2": n_W_l2, "biases2": n_b_l2})
 
@@ -145,6 +145,14 @@ class CFA_process:
                     n_up_l1 = np.squeeze(np.asarray(n_up_l1))
                     W_up_l2 = np.asarray(W_up_l2)
                     n_up_l2 = np.squeeze(np.asarray(n_up_l2))
+            else:
+                sio.savemat('datamat{}_{}.mat'.format(self.ii_saved_local, epoch), {
+                    "weights1": n_W_l1, "biases1": n_b_l1, "weights2": n_W_l2, "biases2": n_b_l2, "epoch": epoch,
+                    "loss_sample": v_loss})
+                W_up_l1 = n_W_l1
+                n_up_l1 = n_b_l1
+                W_up_l2 = n_W_l2
+                n_up_l2 = n_b_l2
 
         else:
             sio.savemat('datamat{}_{}.mat'.format(self.ii_saved_local, epoch), {

@@ -47,13 +47,13 @@ class CFA_ge_process:
         # eps_t_control = 1 #from paper
         while not os.path.isfile(filename2):
             print('Waiting..')
-            pause(1)
+            pause(0.2)
 
         try:
             mathcontent = sio.loadmat(filename2)
         except:
             print('Detected problem while loading file')
-            pause(3)
+            pause(0.2)
             mathcontent = sio.loadmat(filename2)
 
         weights_current_l1 = mathcontent['weights1']
@@ -63,13 +63,13 @@ class CFA_ge_process:
 
         while not os.path.isfile(filename):
             print('Waiting..')
-            pause(1)
+            pause(0.2)
 
         try:
             mathcontent = sio.loadmat(filename)
         except:
             print('Detected problem while loading file')
-            pause(3)
+            pause(0.2)
             mathcontent = sio.loadmat(filename)
 
         balancing_vect = np.ones(devices) * b_v
@@ -95,7 +95,7 @@ class CFA_ge_process:
             mathcontent = sio.loadmat('temp_datamat{}_{}.mat'.format(ii, saved_epoch))
         except:
             print('Unable to save file .. retrying')
-            pause(3)
+            pause(0.2)
             print(biases)
             sio.savemat('temp_datamat{}_{}.mat'.format(ii, saved_epoch), {
                 "weights1": weights_l1, "biases1": biases_l1, "weights2": weights_l2, "biases2": biases_l2})
@@ -196,29 +196,29 @@ class CFA_ge_process:
                                                           epoch - 1)) or not os.path.isfile(
                             'temp_datamat{}_{}.mat'.format(self.ii_saved_local, epoch)):
                             # print('Waiting for datamat{}_{}.mat'.format(ii_saved_local - 1, epoch - 1))
-                            pause(1)
+                            pause(0.2)
                         [W_up_l1, n_up_l1, W_up_l2, n_up_l2] = self.federated_weights_computing2(
                             'datamat{}_{}.mat'.format(neighbor_vec[neighbor_index], epoch - 1),
                             'temp_datamat{}_{}.mat'.format(self.ii_saved_local, epoch), self.ii_saved_local, neighbor_vec[neighbor_index],
                             epoch, self.devices, self.neighbors, eps_t_control)
-                        pause(5)
+                        pause(0.2)
                     try:
                         sio.savemat('datamat{}_{}.mat'.format(self.ii_saved_local, epoch), {
                             "weights1": W_up_l1, "biases1": n_up_l1, "weights2": W_up_l2, "biases2": n_up_l2})
                         mathcontent = sio.loadmat('datamat{}_{}.mat'.format(self.ii_saved_local, epoch))
                     except:
                         print('Unable to save file .. retrying')
-                        pause(3)
+                        pause(0.2)
                         sio.savemat('datamat{}_{}.mat'.format(self.ii_saved_local, epoch), {
                             "weights1": W_up_l1, "biases1": n_up_l1, "weights2": W_up_l2, "biases2": n_up_l2})
 
                     while not os.path.isfile('datamat{}_{}.mat'.format(self.ii_saved_local, epoch)):
                         # print('Waiting for datamat{}_{}.mat'.format(ii_saved_local, epoch))
-                        pause(1)
+                        pause(0.2)
 
                     # waiting for other updates
                     # expanded for gradient exchange
-                    pause(3)
+                    pause(0.2)
 
                     if self.ML_model == 1:
                         g_W_c_vect_l1 = np.zeros([self.filter, 1, self.number, self.devices])
@@ -235,7 +235,7 @@ class CFA_ge_process:
                         while not os.path.isfile(
                                 'datamat{}_{}.mat'.format(neighbor_vec[neighbor_index], epoch)):
                             # print('Waiting for datamat{}_{}.mat'.format(ii_saved_local - 1, epoch))
-                            pause(1)
+                            pause(0.2)
                         try:
                             mathcontent = sio.loadmat('datamat{}_{}.mat'.format(neighbor_vec[neighbor_index], epoch))
                             W_up_neigh_l1 = np.asarray(mathcontent['weights1'])
@@ -243,7 +243,7 @@ class CFA_ge_process:
                             W_up_neigh_l2 = np.asarray(mathcontent['weights2'])
                             n_up_neigh_l2 = np.squeeze(np.array(mathcontent['biases2']))
                         except:
-                            pause(5)
+                            pause(0.2)
                             mathcontent = sio.loadmat('datamat{}_{}.mat'.format(neighbor_vec[neighbor_index], epoch))
                             W_up_neigh_l1 = np.asarray(mathcontent['weights1'])
                             n_up_neigh_l1 = np.squeeze(np.asarray(mathcontent['biases1']))
@@ -275,20 +275,20 @@ class CFA_ge_process:
                             "grad_weights2": g_W_c_vect_l2,
                             "grad_biases2": g_b_c_vect_l2, "epoch": epoch})
                         # waiting for other gradient updates
-                        pause(5)
+                        pause(0.2)
                         mathcontent = sio.loadmat('datagrad{}_{}.mat'.format(self.ii_saved_local, epoch))
                         test_var = mathcontent['grad_biases1']
                         del mathcontent
                     except:
                         print('Unable to save file .. retrying')
-                        pause(3)
+                        pause(0.2)
                         sio.savemat('datagrad{}_{}.mat'.format(self.ii_saved_local, epoch), {
                             "grad_weights1": g_W_c_vect_l1, "grad_biases1": g_b_c_vect_l1,
                             "grad_weights2": g_W_c_vect_l2,
                             "grad_biases2": g_b_c_vect_l2, "epoch": epoch})
 
                     # waiting for other gradient updates
-                    pause(5)
+                    pause(0.2)
                     try:
                         mathcontent = sio.loadmat('datamat{}_{}.mat'.format(self.ii_saved_local, epoch))
                         W_up_l1 = np.asarray(mathcontent['weights1'])
@@ -296,7 +296,7 @@ class CFA_ge_process:
                         W_up_l2 = np.asarray(mathcontent['weights2'])
                         n_up_l2 = np.squeeze(np.asarray(mathcontent['biases2']))
                     except:
-                        pause(5)
+                        pause(0.2)
                         mathcontent = sio.loadmat('datamat{}_{}.mat'.format(self.ii_saved_local, epoch))
                         W_up_l1 = np.asarray(mathcontent['weights1'])
                         n_up_l1 = np.squeeze(np.asarray(mathcontent['biases1']))
@@ -307,11 +307,11 @@ class CFA_ge_process:
                     for neighbor_index in range(neighbor_vec.size):
                         while not os.path.isfile(
                                 'datagrad{}_{}.mat'.format(neighbor_vec[neighbor_index], epoch)):
-                            pause(1)
+                            pause(0.2)
                         try:
                             mathcontent = sio.loadmat('datagrad{}_{}.mat'.format(neighbor_vec[neighbor_index], epoch))
                         except:
-                            pause(3)
+                            pause(0.2)
                             mathcontent = sio.loadmat('datagrad{}_{}.mat'.format(neighbor_vec[neighbor_index], epoch))
                         gradW_up_neigh_l1 = np.asarray(mathcontent['grad_weights1'])
                         gradW_up_neigh_l2 = np.asarray(mathcontent['grad_weights2'])
@@ -319,7 +319,7 @@ class CFA_ge_process:
                             gradn_up_neigh_l1 = np.squeeze(np.asarray(mathcontent['grad_biases1']))
                             gradn_up_neigh_l2 = np.squeeze(np.asarray(mathcontent['grad_biases2']))
                         except:
-                            pause(5)
+                            pause(0.2)
                             print('datagrad{}_{}.mat'.format(neighbor_vec[neighbor_index], epoch))
                             del mathcontent
                             mathcontent = sio.loadmat('datagrad{}_{}.mat'.format(neighbor_vec[neighbor_index], epoch))
@@ -454,20 +454,20 @@ class CFA_ge_process:
                                 'datamat{}_{}.mat'.format(neighbor_vec[neighbor_index], epoch - 1)) or not os.path.isfile(
                                 'temp_datamat{}_{}.mat'.format(self.ii_saved_local, epoch)):
                             # print('Waiting for datamat{}_{}.mat'.format(ii_saved_local - 1, epoch - 1))
-                            pause(1)
+                            pause(0.2)
                         [W_up_l1, n_up_l1, W_up_l2, n_up_l2] = self.federated_weights_computing2(
                             'datamat{}_{}.mat'.format(neighbor_vec[neighbor_index], epoch - 1),
                             'temp_datamat{}_{}.mat'.format(self.ii_saved_local, epoch), self.ii_saved_local,
                             neighbor_vec[neighbor_index],
                             epoch, self.devices, self.neighbors, eps_t_control)
-                        pause(5)
+                        pause(0.2)
 
                     W_up_l1 = np.asarray(W_up_l1)
                     n_up_l1 = np.squeeze(np.asarray(n_up_l1))
                     W_up_l2 = np.asarray(W_up_l2)
                     n_up_l2 = np.squeeze(np.asarray(n_up_l2))
 
-                    pause(3)
+                    pause(0.2)
 
                     try:
                         sio.savemat('datamat{}_{}.mat'.format(self.ii_saved_local, epoch), {
@@ -475,7 +475,7 @@ class CFA_ge_process:
                         mathcontent = sio.loadmat('datamat{}_{}.mat'.format(self.ii_saved_local, epoch))
                     except:
                         print('Unable to save file .. retrying')
-                        pause(3)
+                        pause(0.2)
                         sio.savemat('datamat{}_{}.mat'.format(self.ii_saved_local, epoch), {
                             "weights1": n_W_l1, "biases1": n_b_l1, "weights2": n_W_l2, "biases2": n_b_l2})
 
@@ -494,7 +494,7 @@ class CFA_ge_process:
                         while not os.path.isfile(
                                 'datamat{}_{}.mat'.format(neighbor_vec[neighbor_index], epoch - 1)):
                             # print('Waiting for datamat{}_{}.mat'.format(ii_saved_local - 1, epoch))
-                            pause(1)
+                            pause(0.2)
                         try:
                             mathcontent = sio.loadmat(
                                 'datamat{}_{}.mat'.format(neighbor_vec[neighbor_index], epoch - 1))
@@ -503,7 +503,7 @@ class CFA_ge_process:
                             W_up_neigh_l2 = np.asarray(mathcontent['weights2'])
                             n_up_neigh_l2 = np.squeeze(np.array(mathcontent['biases2']))
                         except:
-                            pause(5)
+                            pause(0.2)
                             mathcontent = sio.loadmat(
                                 'datamat{}_{}.mat'.format(neighbor_vec[neighbor_index], epoch - 1))
                             W_up_neigh_l1 = np.asarray(mathcontent['weights1'])
@@ -536,13 +536,13 @@ class CFA_ge_process:
                             "grad_weights2": g_W_c_vect_l2,
                             "grad_biases2": g_b_c_vect_l2, "epoch": epoch})
                         # waiting for other gradient updates
-                        pause(5)
+                        pause(0.2)
                         mathcontent = sio.loadmat('datagrad{}_{}.mat'.format(self.ii_saved_local, epoch))
                         test_var = mathcontent['grad_biases1']
                         del mathcontent
                     except:
                         print('Unable to save file .. retrying')
-                        pause(3)
+                        pause(0.2)
                         sio.savemat('datagrad{}_{}.mat'.format(self.ii_saved_local, epoch), {
                             "grad_weights1": g_W_c_vect_l1, "grad_biases1": g_b_c_vect_l1,
                             "grad_weights2": g_W_c_vect_l2,
@@ -560,18 +560,18 @@ class CFA_ge_process:
                                 print("Error while deleting file")
 
                     # waiting for other gradient updates
-                    pause(5)
+                    pause(0.2)
 
                     # update local model with neighbor gradients
                     for neighbor_index in range(neighbor_vec.size):
                         while not os.path.isfile(
                                 'datagrad{}_{}.mat'.format(neighbor_vec[neighbor_index], epoch - 1)):
-                            pause(1)
+                            pause(0.2)
                         try:
                             mathcontent = sio.loadmat(
                                 'datagrad{}_{}.mat'.format(neighbor_vec[neighbor_index], epoch - 1))
                         except:
-                            pause(3)
+                            pause(0.2)
                             mathcontent = sio.loadmat(
                                 'datagrad{}_{}.mat'.format(neighbor_vec[neighbor_index], epoch - 1))
                         gradW_up_neigh_l1 = np.asarray(mathcontent['grad_weights1'])
@@ -580,7 +580,7 @@ class CFA_ge_process:
                             gradn_up_neigh_l1 = np.squeeze(np.asarray(mathcontent['grad_biases1']))
                             gradn_up_neigh_l2 = np.squeeze(np.asarray(mathcontent['grad_biases2']))
                         except:
-                            pause(5)
+                            pause(0.2)
                             print('datagrad{}_{}.mat'.format(neighbor_vec[neighbor_index], epoch))
                             del mathcontent
                             mathcontent = sio.loadmat(

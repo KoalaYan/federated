@@ -15,7 +15,7 @@ import argparse
 import tensorflow.compat.v1 as tf
 import logging
 tf.disable_v2_behavior()
-#　os.environ["CUDA_VISIBLE_DEVICES"]="-1"
+# os.environ["CUDA_VISIBLE_DEVICES"]="-1"
 os.environ['TF_CPP_MIN_LOG_LEVEL']= '3'
 logging.basicConfig(filename='2NN_CFA-GE.log', level=logging.INFO)
 
@@ -129,7 +129,8 @@ def processData(samples, iii, federated, tot_devices,fraction_training, neighbor
     consensus_p.set2NNparameters(intermediate_nodes, classes, input_data)
 
     #    Start training
-    with tf.Session() as sess:
+    gpu_options = tf.GPUOptions(allow_growth=True)
+    with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
         sess.run(init)
         total_batch = int(samples / batch_size)
         # PRINTS THE TOTAL NUMBER OF MINI BATCHES
@@ -162,8 +163,9 @@ def processData(samples, iii, federated, tot_devices,fraction_training, neighbor
                                         new_W_l2, new_b_l2, cost, grad_W_l1, grad_b_l1, grad_W_l2, grad_b_l2], feed_dict={x: batch_xs,
                                         y: batch_ys, W_ext_l1: W_val_l1, b_ext_l1: b_val_l1, W_ext_l2: W_val_l2, b_ext_l2: b_val_l2})
                 avg_cost += c / total_batch  # Training loss
+
             # validation
-            with tf.Session() as sess2:
+            with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess2:
                 sess2.run(init)
                 for i in range(total_batch2):
                     # Construct model
@@ -202,14 +204,15 @@ def processData(samples, iii, federated, tot_devices,fraction_training, neighbor
             'results/dump_loss_{}_{date:%Y-%m-%d-%H-%M-%S}.mat'.format(iii, date=datetime.datetime.now().time()), {
                 "val_acc": val_loss, "device": iii})
 
-        # Test model
-        correct_prediction = tf.equal(tf.argmax(pred, 1), tf.argmax(y, 1))
-        # Calculate accuracy for 3000 examples
-        accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-
-        logInfo = 'Test Device: ' + str(iii) + ", Epoch:" + '%04d' % (epoch + 1) + ", Accuracy=" + "{:.9f}".format(accuracy)
-        print("Log Info: " + logInfo)
-        logging.info(logInfo)
+        # # Test model
+        # correct_prediction = tf.equal(tf.argmax(pred, 1), tf.argmax(y, 1))
+        # # Calculate accuracy for 3000 examples
+        # accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+        # acc = accuracy
+        #
+        # logInfo = 'Test Device: ' + str(iii) + ", Epoch:" + '%04d' % (epoch + 1) + ", Accuracy=" + "{:.9f}".format(accuracy)
+        # print("Log Info: " + logInfo)
+        # logging.info(logInfo)
 
 
 if __name__ == "__main__":

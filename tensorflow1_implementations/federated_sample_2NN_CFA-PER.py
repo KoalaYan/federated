@@ -114,7 +114,8 @@ def processData(samples, iii, federated, tot_devices,fraction_training, neighbor
     consensus_p = CFA_process(federated, tot_devices, iii, neighbors_number, probability)
 
     #    Start training
-    with tf.Session() as sess:
+    gpu_options = tf.GPUOptions(allow_growth=True)
+    with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
         sess.run(init)
         total_batch = int(samples / batch_size)
         # PRINTS THE TOTAL NUMBER OF MINI BATCHES
@@ -148,7 +149,7 @@ def processData(samples, iii, federated, tot_devices,fraction_training, neighbor
                                                                                                                                                                                 y: batch_ys, W_ext_l1: W_val_l1, b_ext_l1: b_val_l1, W_ext_l2: W_val_l2, b_ext_l2: b_val_l2})
                 avg_cost += c / total_batch  # Training loss
             # validation
-            with tf.Session() as sess2:
+            with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess2:
                 sess2.run(init)
                 for i in range(total_batch2):
                     # Construct model

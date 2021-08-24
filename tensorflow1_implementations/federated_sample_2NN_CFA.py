@@ -13,6 +13,7 @@ import glob
 import logging
 
 import argparse
+os.environ['TF_CPP_MIN_LOG_LEVEL']= '3'
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 # os.environ["CUDA_VISIBLE_DEVICES"]="-1"
@@ -113,7 +114,9 @@ def processData(samples, iii, federated, tot_devices,fraction_training, neighbor
     consensus_p = CFA_process(federated, tot_devices, iii, neighbors_number)
 
     #    Start training
-    with tf.Session() as sess:
+    gpu_options = tf.GPUOptions(allow_growth=True)
+    #　sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+    with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
         sess.run(init)
         total_batch = int(samples / batch_size)
         # PRINTS THE TOTAL NUMBER OF MINI BATCHES
@@ -156,6 +159,7 @@ def processData(samples, iii, federated, tot_devices,fraction_training, neighbor
                     c = sess2.run(cost2, feed_dict={x: batch_xs,
                                         y: batch_ys, W2_ext_l1: n_W_l1, b2_ext_l1: n_b_l1, W2_ext_l2: n_W_l2, b2_ext_l2: n_b_l2})
                     avg_cost_test += c / total_batch2
+
             val_loss[epoch] = avg_cost_test
             # print('Test Device: ' + str(iii) + " Epoch:", '%04d' % (epoch + 1), "cost=", "{:.9f}".format(avg_cost_test))
             logInfo = 'Test Device: ' + str(iii) + ", Epoch:" + '%04d' % (epoch + 1) + ", cost=" + "{:.9f}".format(avg_cost_test)
