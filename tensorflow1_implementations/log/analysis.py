@@ -8,7 +8,7 @@ if __name__ == '__main__':
     fileList = os.listdir('./')
     print(fileList)
     # symbol = ['-','--',':','-.']
-    colors = ['r','b','y','c','m','g','black']
+    colors = ['r','b','y','c','m','g','black','pink','orange','purple']
     plt.figure()
     for id in range(len(fileList)):
         file = fileList[id]
@@ -25,6 +25,7 @@ if __name__ == '__main__':
                 costAvg[epoch-1] += cost
                 num[epoch-1] += 1
                 # (epoch, cost)
+            print(num)
             for index in range(costAvg.size):
                 costAvg[index] /= num[index]
                 # print(costAvg[index])
@@ -38,5 +39,7 @@ if __name__ == '__main__':
             plt.ylabel(u'AvgCost')#fill the meaning of Y axis
     plt.legend()
     plt.title('Comparison')#add the title of the figure
+    fig = plt.gcf()
+    fig.savefig('Comparison.png')
     plt.show()
     # f = open('', 'r')
